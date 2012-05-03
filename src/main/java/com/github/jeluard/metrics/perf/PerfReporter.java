@@ -67,7 +67,9 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
       final Metric metric = entry.getValue();
       final long value;
       if (metric instanceof Counter) {
-        value = ((Counter)metric).count();
+        value = ((Counter) metric).count();
+      } else if (metric instanceof Timer) {
+        value = ((Timer) metric).count();
       } else {
         //Unrecognized Metric, skip it
         continue;
@@ -124,14 +126,14 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
 
   @Override
   public void processTimer(final MetricName name, final Timer timer, final String t) throws Exception {
-    throw new UnsupportedOperationException("Not supported yet.");
+    initializePerfCounter(name, Variability.MONOTONIC, Units.EVENTS, timer.count());
   }
 
   @Override
   public void processGauge(final MetricName name, final Gauge<?> gauge, final String t) throws Exception {
     final Object value = gauge.value();
     if (value instanceof Long) {
-      initializePerfCounter(name, Variability.VARIABLE, Units.EVENTS, (Long) value);
+      initializePerfCounter(name, Variability.CONSTANT, Units.EVENTS, (Long) value);
     }
     //Only support long type
   }
