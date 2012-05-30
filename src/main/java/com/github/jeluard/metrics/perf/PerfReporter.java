@@ -28,33 +28,22 @@ import com.yammer.metrics.core.MetricsRegistryListener;
 import com.yammer.metrics.core.Timer;
 import com.yammer.metrics.reporting.AbstractPollingReporter;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.AccessController;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import sun.management.counter.Units;
-import sun.management.counter.Variability;
-import sun.misc.Perf;
-
-public class PerfReporter extends AbstractPollingReporter implements MetricsRegistryListener, MetricProcessor<String> {
+public class PerfReporter extends AbstractPollingReporter implements MetricsRegistryListener, MetricProcessor<Void> {
 
   private static final String REPORTER_NAME = "perf-reporter";
 
-  private final Map<MetricName, ByteBuffer> metrics = new ConcurrentHashMap<MetricName, ByteBuffer>();
+  private final Map<MetricName, PerfWrapper> perfWrappers = new ConcurrentHashMap<MetricName, PerfWrapper>();
 
   public PerfReporter(final MetricsRegistry metricsRegistry) {
     super(metricsRegistry, PerfReporter.REPORTER_NAME);
   }
 
-  protected final Perf getperf() {
-    return (Perf) AccessController.doPrivileged(new Perf.GetPerfAction());
-  }
-
   @Override
-  public void start(long period, TimeUnit unit) {
+  public void start(final long period, final TimeUnit unit) {
     getMetricsRegistry().addListener(this);
 
     super.start(period, unit);
@@ -63,20 +52,14 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
   @Override
   public void run() {
     for (final Map.Entry<MetricName, Metric> entry : Metrics.defaultRegistry().allMetrics().entrySet()) {
-      final ByteBuffer buffer = this.metrics.get(entry.getKey());
-      final Metric metric = entry.getValue();
-      final long value;
-      if (metric instanceof Counter) {
-        value = ((Counter) metric).count();
-      } else if (metric instanceof Timer) {
-        value = ((Timer) metric).count();
-      } else {
-        //Unrecognized Metric, skip it
+      final PerfWrapper wrapper = this.perfWrappers.get(entry.getKey());
+      if (wrapper == null) {
+        //TODO log
         continue;
       }
 
-      buffer.putLong(value);
-      buffer.rewind();
+      final Metric metric = entry.getValue();
+      wrapper.update(metric);
     }
   }
 
@@ -84,7 +67,7 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
   public void onMetricAdded(final MetricName name, final Metric metric) {
     if (metric != null) {
       try {
-          metric.processWith(this, name, "");
+          metric.processWith(this, name, null);
       } catch (Exception e) {
         e.printStackTrace();
           //LOGGER.warn("Error processing {}", name, e);
@@ -97,45 +80,33 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
     //Once added a perf counter can't be removed.
   }
 
-  protected final ByteBuffer createByteBuffer(final MetricName name, final Variability variability, final Units units, final long value) {
-     final Perf perf = getperf();
-     final ByteBuffer buffer = perf.createLong("metric.test."+name.getName(), variability.intValue(), units.intValue(), value);
-     buffer.order(ByteOrder.nativeOrder());
-     buffer.rewind();
-     return buffer;
-  }
-
-  private void initializePerfCounter(final MetricName name, final Variability variability, final Units units, final long value) {
-    this.metrics.put(name, createByteBuffer(name, variability, units, value));
-  }
-
   @Override
-  public void processMeter(final MetricName name, final Metered metered, final String t) throws Exception {
+  public void processMeter(final MetricName name, final Metered metered, final Void context) throws Exception {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
-  public void processCounter(final MetricName name, final Counter counter, final String string) throws Exception {
-     initializePerfCounter(name, Variability.MONOTONIC, Units.EVENTS, counter.count());
+  public void processCounter(final MetricName name, final Counter counter, final Void context) throws Exception {
+     this.perfWrappers.put(name, new PerfWrapper.Counter(name, counter));
   }
 
   @Override
-  public void processHistogram(final MetricName name, final Histogram histogram, final String t) throws Exception {
+  public void processHistogram(final MetricName name, final Histogram histogram, final Void context) throws Exception {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
-  public void processTimer(final MetricName name, final Timer timer, final String t) throws Exception {
-    initializePerfCounter(name, Variability.MONOTONIC, Units.EVENTS, timer.count());
+  public void processTimer(final MetricName name, final Timer timer, final Void context) throws Exception {
+    this.perfWrappers.put(name, new PerfWrapper.Timer(name, timer));
   }
 
   @Override
-  public void processGauge(final MetricName name, final Gauge<?> gauge, final String t) throws Exception {
+  public void processGauge(final MetricName name, final Gauge<?> gauge, final Void context) throws Exception {
     final Object value = gauge.value();
-    if (value instanceof Long) {
-      initializePerfCounter(name, Variability.CONSTANT, Units.EVENTS, (Long) value);
+    if (value instanceof Number) {
+      this.perfWrappers.put(name, new PerfWrapper.Gauge(name, gauge));
     }
-    //Only support long type
+    //Only support Numbers
   }
 
   @Override
