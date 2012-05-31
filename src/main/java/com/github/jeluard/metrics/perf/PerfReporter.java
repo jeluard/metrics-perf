@@ -31,10 +31,16 @@ import com.yammer.metrics.reporting.AbstractPollingReporter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+/**
+ * An {@link AbstractPollingReporter} that exports all metrics as Hotspot perf counters.
+ */
 public class PerfReporter extends AbstractPollingReporter implements MetricsRegistryListener, MetricProcessor<Void> {
 
   private static final String REPORTER_NAME = "perf-reporter";
+  static final Logger LOGGER = Logger.getLogger(PerfReporter.class.getPackage().getName());
 
   private final Map<MetricName, PerfWrapper> perfWrappers = new ConcurrentHashMap<MetricName, PerfWrapper>();
 
@@ -44,6 +50,14 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
 
   @Override
   public void start(final long period, final TimeUnit unit) {
+    if (!Perfs.isPlatformSupported()) {
+      if (PerfReporter.LOGGER.isLoggable(Level.WARNING)) {
+        PerfReporter.LOGGER.warning("Current platform does not support perf counters. Metrics won't be exported as perf counters.");
+      }
+
+      return;
+    }
+    
     getMetricsRegistry().addListener(this);
 
     super.start(period, unit);
@@ -52,9 +66,14 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
   @Override
   public void run() {
     for (final Map.Entry<MetricName, Metric> entry : Metrics.defaultRegistry().allMetrics().entrySet()) {
-      final PerfWrapper wrapper = this.perfWrappers.get(entry.getKey());
+      final MetricName name = entry.getKey();
+      final PerfWrapper wrapper = this.perfWrappers.get(name);
       if (wrapper == null) {
-        //TODO log
+        //TODO add to blacklist so that we don't print this in a loop
+        if (PerfReporter.LOGGER.isLoggable(Level.WARNING)) {
+          PerfReporter.LOGGER.log(Level.WARNING, "No perf counter found for <{0}>; skipping.", name.getName());
+        }
+
         continue;
       }
 
@@ -69,8 +88,9 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
       try {
           metric.processWith(this, name, null);
       } catch (Exception e) {
-        e.printStackTrace();
-          //LOGGER.warn("Error processing {}", name, e);
+        if (PerfReporter.LOGGER.isLoggable(Level.WARNING)) {
+          PerfReporter.LOGGER.log(Level.WARNING, "Failed to process <"+name.getName()+">.", e);
+        }
       }
     }
   }
@@ -103,10 +123,15 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
   @Override
   public void processGauge(final MetricName name, final Gauge<?> gauge, final Void context) throws Exception {
     final Object value = gauge.value();
-    if (value instanceof Number) {
-      this.perfWrappers.put(name, new PerfWrapper.Gauge(name, gauge));
+    if (!(value instanceof Number)) {
+      if (PerfReporter.LOGGER.isLoggable(Level.FINE)) {
+        PerfReporter.LOGGER.log(Level.FINE, "Skipping <{0}> as its type is not supported.", name.getName());
+      }
+
+      return;
     }
-    //Only support Numbers
+
+    this.perfWrappers.put(name, new PerfWrapper.Gauge(name, gauge));
   }
 
   @Override
