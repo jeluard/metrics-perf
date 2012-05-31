@@ -22,11 +22,21 @@ import com.yammer.metrics.core.MetricName;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * Perf counter wrapper for {@link Metric}.
+ * 
+ * @param <T> 
+ */
 public abstract class PerfWrapper<T extends Metric> {
 
   public PerfWrapper(final MetricName name, final T metric) {
   }
 
+  /**
+   * Update this perf counter with provided `meter`.
+   * 
+   * @param meter 
+   */
   public abstract void update(T meter);
 
   protected final String createName(final MetricName name, final String suffix) {
@@ -112,12 +122,12 @@ public abstract class PerfWrapper<T extends Metric> {
       super(name, timer);
 
       this.countBuffer = createBuffer(name, "count", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.count());
-      this.minBuffer = createBuffer(name, "min", Perfs.VARIABILITY_VARIABLE, Perfs.UNITS_EVENTS, timer.min());
-      this.maxBuffer = createBuffer(name, "max", Perfs.VARIABILITY_VARIABLE, Perfs.UNITS_EVENTS, timer.max());
-      this.meanBuffer = createBuffer(name, "mean", Perfs.VARIABILITY_VARIABLE, Perfs.UNITS_EVENTS, timer.mean());
-      this.meanRateBuffer = createBuffer(name, "mean-rate", Perfs.VARIABILITY_VARIABLE, Perfs.UNITS_EVENTS, timer.meanRate());
-      this.sumBuffer = createBuffer(name, "sum", Perfs.VARIABILITY_VARIABLE, Perfs.UNITS_EVENTS, timer.sum());
-      this.stdDevBuffer = createBuffer(name, "std-dev", Perfs.VARIABILITY_VARIABLE, Perfs.UNITS_EVENTS, timer.stdDev());
+      this.minBuffer = createBuffer(name, "min", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.min());
+      this.maxBuffer = createBuffer(name, "max", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.max());
+      this.meanBuffer = createBuffer(name, "mean", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.mean());
+      this.meanRateBuffer = createBuffer(name, "mean-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.meanRate());
+      this.sumBuffer = createBuffer(name, "sum", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.sum());
+      this.stdDevBuffer = createBuffer(name, "std-dev", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.stdDev());
     }
 
     @Override
