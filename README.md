@@ -4,7 +4,7 @@ You can safely use this on a non-Hotspot VM as all Hotspot specific calls are do
 
 ## Usage
 
-To expert all your metrics simply add this code:
+To export all your metrics simply add this code:
 
 ```java
 final PerfReporter reporter = new PerfReporter(Metrics.defaultRegistry());
@@ -14,7 +14,7 @@ All perf counters values will then be updated every seconds.
 
 ### Maven dependency
 
-Simply add following to your pom.xml:
+Add following dependency to your pom.xml:
 
 ```xml
 ...
