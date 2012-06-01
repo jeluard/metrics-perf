@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.jeluard</groupId>
     <artifactId>metrics-perf</artifactId>
-    <version>0.9-SNAPSHOT</version>
+    <version>0.9</version>
 
     <name>Metrics perf extension</name>
     <inceptionYear>2012</inceptionYear>
