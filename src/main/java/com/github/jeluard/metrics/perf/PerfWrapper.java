@@ -108,6 +108,91 @@ public abstract class PerfWrapper<T extends Metric> {
   /**
    * Wraps {@link Timer}.
    */
+  public static class Metered extends PerfWrapper<com.yammer.metrics.core.Metered> {
+
+    private final ByteBuffer countBuffer;
+    private final ByteBuffer meanRateBuffer;
+    private final ByteBuffer oneMinRateBuffer;
+    private final ByteBuffer fiveMinRateBuffer;
+    private final ByteBuffer fifteenMinRateBuffer;
+
+    public Metered(final MetricName name, final com.yammer.metrics.core.Metered metered) {
+      super(name, metered);
+
+      this.countBuffer = createBuffer(name, "count", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, metered.count());
+      this.meanRateBuffer = createBuffer(name, "mean-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, metered.meanRate());
+      this.oneMinRateBuffer = createBuffer(name, "1min-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, metered.oneMinuteRate());
+      this.fiveMinRateBuffer = createBuffer(name, "5min-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, metered.fiveMinuteRate());
+      this.fifteenMinRateBuffer = createBuffer(name, "15min-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, metered.fifteenMinuteRate());
+    }
+
+    @Override
+    public void update(final com.yammer.metrics.core.Metered metered) {
+      update(this.countBuffer, metered.count());
+      update(this.meanRateBuffer, metered.meanRate());
+      update(this.oneMinRateBuffer, metered.oneMinuteRate());
+      update(this.fiveMinRateBuffer, metered.fiveMinuteRate());
+      update(this.fifteenMinRateBuffer, metered.fifteenMinuteRate());
+    }
+
+  }
+
+  /**
+   * Wraps {@link Timer}.
+   */
+  public static class Histogram extends PerfWrapper<com.yammer.metrics.core.Histogram> {
+
+    private final ByteBuffer countBuffer;
+    private final ByteBuffer minBuffer;
+    private final ByteBuffer maxBuffer;
+    private final ByteBuffer meanBuffer;
+    private final ByteBuffer sumBuffer;
+    private final ByteBuffer stdDevBuffer;
+    private final ByteBuffer snapshotMedianBuffer;
+    private final ByteBuffer snapshot75thPercentileBuffer;
+    private final ByteBuffer snapshot95thPercentileBuffer;
+    private final ByteBuffer snapshot98thPercentileBuffer;
+    private final ByteBuffer snapshot99thPercentileBuffer;
+    private final ByteBuffer snapshot999thPercentileBuffer;
+
+    public Histogram(final MetricName name, final com.yammer.metrics.core.Histogram histogram) {
+      super(name, histogram);
+
+      this.countBuffer = createBuffer(name, "count", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.count());
+      this.minBuffer = createBuffer(name, "min", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.min());
+      this.maxBuffer = createBuffer(name, "max", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.max());
+      this.meanBuffer = createBuffer(name, "mean", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.mean());
+      this.sumBuffer = createBuffer(name, "sum", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.sum());
+      this.stdDevBuffer = createBuffer(name, "std-dev", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.stdDev());
+      this.snapshotMedianBuffer = createBuffer(name, "snapshot.median", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.getSnapshot().getMedian());
+      this.snapshot75thPercentileBuffer = createBuffer(name, "snapshot.75th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.getSnapshot().get75thPercentile());
+      this.snapshot95thPercentileBuffer = createBuffer(name, "snapshot.95th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.getSnapshot().get95thPercentile());
+      this.snapshot98thPercentileBuffer = createBuffer(name, "snapshot.98th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.getSnapshot().get98thPercentile());
+      this.snapshot99thPercentileBuffer = createBuffer(name, "snapshot.99th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.getSnapshot().get99thPercentile());
+      this.snapshot999thPercentileBuffer = createBuffer(name, "snapshot.999th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, histogram.getSnapshot().get999thPercentile());
+    }
+
+    @Override
+    public void update(final com.yammer.metrics.core.Histogram histogram) {
+      update(this.countBuffer, histogram.count());
+      update(this.minBuffer, histogram.min());
+      update(this.maxBuffer, histogram.max());
+      update(this.meanBuffer, histogram.mean());
+      update(this.sumBuffer, histogram.sum());
+      update(this.stdDevBuffer, histogram.stdDev());
+      update(this.snapshotMedianBuffer, histogram.getSnapshot().getMedian());
+      update(this.snapshot75thPercentileBuffer, histogram.getSnapshot().get75thPercentile());
+      update(this.snapshot95thPercentileBuffer, histogram.getSnapshot().get95thPercentile());
+      update(this.snapshot98thPercentileBuffer, histogram.getSnapshot().get98thPercentile());
+      update(this.snapshot99thPercentileBuffer, histogram.getSnapshot().get99thPercentile());
+      update(this.snapshot999thPercentileBuffer, histogram.getSnapshot().get999thPercentile());
+    }
+
+  }
+
+  /**
+   * Wraps {@link Timer}.
+   */
   public static class Timer extends PerfWrapper<com.yammer.metrics.core.Timer> {
 
     private final ByteBuffer countBuffer;

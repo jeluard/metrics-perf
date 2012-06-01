@@ -102,7 +102,7 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
 
   @Override
   public void processMeter(final MetricName name, final Metered metered, final Void context) throws Exception {
-    throw new UnsupportedOperationException("Not supported yet.");
+    this.perfWrappers.put(name, new PerfWrapper.Metered(name, metered));
   }
 
   @Override
@@ -112,7 +112,7 @@ public class PerfReporter extends AbstractPollingReporter implements MetricsRegi
 
   @Override
   public void processHistogram(final MetricName name, final Histogram histogram, final Void context) throws Exception {
-    throw new UnsupportedOperationException("Not supported yet.");
+    this.perfWrappers.put(name, new PerfWrapper.Histogram(name, histogram));
   }
 
   @Override
