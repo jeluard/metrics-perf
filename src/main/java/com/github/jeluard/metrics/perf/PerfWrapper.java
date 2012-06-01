@@ -114,9 +114,18 @@ public abstract class PerfWrapper<T extends Metric> {
     private final ByteBuffer minBuffer;
     private final ByteBuffer maxBuffer;
     private final ByteBuffer meanBuffer;
-    private final ByteBuffer meanRateBuffer;
     private final ByteBuffer sumBuffer;
     private final ByteBuffer stdDevBuffer;
+    private final ByteBuffer meanRateBuffer;
+    private final ByteBuffer oneMinRateBuffer;
+    private final ByteBuffer fiveMinRateBuffer;
+    private final ByteBuffer fifteenMinRateBuffer;
+    private final ByteBuffer snapshotMedianBuffer;
+    private final ByteBuffer snapshot75thPercentileBuffer;
+    private final ByteBuffer snapshot95thPercentileBuffer;
+    private final ByteBuffer snapshot98thPercentileBuffer;
+    private final ByteBuffer snapshot99thPercentileBuffer;
+    private final ByteBuffer snapshot999thPercentileBuffer;
 
     public Timer(final MetricName name, final com.yammer.metrics.core.Timer timer) {
       super(name, timer);
@@ -125,9 +134,18 @@ public abstract class PerfWrapper<T extends Metric> {
       this.minBuffer = createBuffer(name, "min", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.min());
       this.maxBuffer = createBuffer(name, "max", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.max());
       this.meanBuffer = createBuffer(name, "mean", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.mean());
-      this.meanRateBuffer = createBuffer(name, "mean-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.meanRate());
       this.sumBuffer = createBuffer(name, "sum", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.sum());
       this.stdDevBuffer = createBuffer(name, "std-dev", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.stdDev());
+      this.meanRateBuffer = createBuffer(name, "mean-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.meanRate());
+      this.oneMinRateBuffer = createBuffer(name, "1min-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.oneMinuteRate());
+      this.fiveMinRateBuffer = createBuffer(name, "5min-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.fiveMinuteRate());
+      this.fifteenMinRateBuffer = createBuffer(name, "15min-rate", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.fifteenMinuteRate());
+      this.snapshotMedianBuffer = createBuffer(name, "snapshot.median", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.getSnapshot().getMedian());
+      this.snapshot75thPercentileBuffer = createBuffer(name, "snapshot.75th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.getSnapshot().get75thPercentile());
+      this.snapshot95thPercentileBuffer = createBuffer(name, "snapshot.95th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.getSnapshot().get95thPercentile());
+      this.snapshot98thPercentileBuffer = createBuffer(name, "snapshot.98th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.getSnapshot().get98thPercentile());
+      this.snapshot99thPercentileBuffer = createBuffer(name, "snapshot.99th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.getSnapshot().get99thPercentile());
+      this.snapshot999thPercentileBuffer = createBuffer(name, "snapshot.999th", Perfs.VARIABILITY_MONOTONIC, Perfs.UNITS_EVENTS, timer.getSnapshot().get999thPercentile());
     }
 
     @Override
@@ -136,9 +154,18 @@ public abstract class PerfWrapper<T extends Metric> {
       update(this.minBuffer, timer.min());
       update(this.maxBuffer, timer.max());
       update(this.meanBuffer, timer.mean());
-      update(this.meanRateBuffer, timer.meanRate());
       update(this.sumBuffer, timer.sum());
       update(this.stdDevBuffer, timer.stdDev());
+      update(this.meanRateBuffer, timer.meanRate());
+      update(this.oneMinRateBuffer, timer.oneMinuteRate());
+      update(this.fiveMinRateBuffer, timer.fiveMinuteRate());
+      update(this.fifteenMinRateBuffer, timer.fifteenMinuteRate());
+      update(this.snapshotMedianBuffer, timer.getSnapshot().getMedian());
+      update(this.snapshot75thPercentileBuffer, timer.getSnapshot().get75thPercentile());
+      update(this.snapshot95thPercentileBuffer, timer.getSnapshot().get95thPercentile());
+      update(this.snapshot98thPercentileBuffer, timer.getSnapshot().get98thPercentile());
+      update(this.snapshot99thPercentileBuffer, timer.getSnapshot().get99thPercentile());
+      update(this.snapshot999thPercentileBuffer, timer.getSnapshot().get999thPercentile());
     }
 
   }
